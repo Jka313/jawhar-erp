@@ -1,9 +1,7 @@
 import streamlit as st
 from supabase import create_client, Client
-import base64
 import uuid
 from datetime import datetime
-import io
 
 # ─────────────────────────────────────────────
 #  CONFIG & CONNECTION
@@ -19,107 +17,106 @@ st.set_page_config(
 )
 
 # ─────────────────────────────────────────────
-#  GLOBAL CSS — PREMIUM DARK GOLD THEME
+#  GLOBAL CSS — ULTRA PREMIUM DARK GOLD THEME
 # ─────────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap');
 
-/* ── RESET & BASE ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 .stApp {
-    background: #080A0F;
-    font-family: 'DM Sans', sans-serif;
-    color: #E8DCC8;
+    background: #06080D;
+    font-family: 'Inter', sans-serif;
+    color: #EAE0CC;
+    min-height: 100vh;
     background-image:
-        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(212,175,55,0.08) 0%, transparent 60%),
-        radial-gradient(ellipse 40% 40% at 90% 80%, rgba(212,175,55,0.04) 0%, transparent 50%);
+        radial-gradient(ellipse 100% 60% at 50% -10%, rgba(212,175,55,0.07) 0%, transparent 65%),
+        radial-gradient(ellipse 50% 50% at 95% 85%,  rgba(212,175,55,0.04) 0%, transparent 55%),
+        radial-gradient(ellipse 30% 30% at 5%  20%,  rgba(212,175,55,0.03) 0%, transparent 50%);
 }
 
-/* ── HIDE STREAMLIT CHROME ── */
-#MainMenu, footer, header, .stDeployButton { display: none !important; }
+#MainMenu, footer, header, .stDeployButton,
+[data-testid="stToolbar"], [data-testid="stDecoration"] { display: none !important; }
 .block-container { padding: 0 !important; max-width: 100% !important; }
 
-/* ── SIDEBAR ── */
 [data-testid="stSidebar"] {
-    background: #0D1017 !important;
-    border-right: 1px solid rgba(212,175,55,0.2) !important;
+    background: linear-gradient(180deg, #0A0C12 0%, #080A0F 100%) !important;
+    border-right: 1px solid rgba(212,175,55,0.18) !important;
+    box-shadow: 4px 0 30px rgba(0,0,0,0.4) !important;
 }
-[data-testid="stSidebar"] .stMarkdown { color: #E8DCC8; }
+[data-testid="stSidebarContent"] { padding: 0 !important; }
 
-/* ── INPUTS ── */
 .stTextInput > div > div > input,
 .stNumberInput > div > div > input,
-.stSelectbox > div > div > div,
 .stTextArea textarea {
-    background: rgba(255,255,255,0.03) !important;
-    border: 1px solid rgba(212,175,55,0.25) !important;
+    background: rgba(255,255,255,0.025) !important;
+    border: 1px solid rgba(212,175,55,0.2) !important;
     border-radius: 10px !important;
-    color: #E8DCC8 !important;
-    font-family: 'DM Sans', sans-serif !important;
-    font-size: 0.95rem !important;
-    padding: 0.6rem 1rem !important;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    color: #EAE0CC !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.93rem !important;
+    padding: 0.65rem 1rem !important;
+    transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+    caret-color: #D4AF37;
 }
 .stTextInput > div > div > input:focus,
 .stNumberInput > div > div > input:focus,
 .stTextArea textarea:focus {
-    border-color: #D4AF37 !important;
-    box-shadow: 0 0 0 3px rgba(212,175,55,0.1) !important;
+    border-color: rgba(212,175,55,0.6) !important;
+    background: rgba(212,175,55,0.04) !important;
+    box-shadow: 0 0 0 3px rgba(212,175,55,0.08), 0 2px 12px rgba(0,0,0,0.3) !important;
     outline: none !important;
 }
-.stTextInput label, .stNumberInput label, .stSelectbox label, .stTextArea label {
-    color: rgba(232,220,200,0.6) !important;
-    font-size: 0.8rem !important;
+.stTextInput label, .stNumberInput label, .stTextArea label, .stSelectbox label {
+    color: rgba(234,224,204,0.5) !important;
+    font-size: 0.72rem !important;
     font-weight: 500 !important;
-    letter-spacing: 0.08em !important;
+    letter-spacing: 0.1em !important;
     text-transform: uppercase !important;
 }
+.stSelectbox > div > div {
+    background: rgba(255,255,255,0.025) !important;
+    border: 1px solid rgba(212,175,55,0.2) !important;
+    border-radius: 10px !important;
+    color: #EAE0CC !important;
+}
 
-/* ── BUTTONS ── */
 .stButton > button {
-    background: linear-gradient(135deg, #D4AF37 0%, #F5D060 50%, #D4AF37 100%) !important;
-    color: #080A0F !important;
+    background: linear-gradient(135deg, #C9A227 0%, #F0D060 45%, #C9A227 100%) !important;
+    color: #06080D !important;
     border: none !important;
     border-radius: 10px !important;
-    font-family: 'DM Sans', sans-serif !important;
+    font-family: 'Inter', sans-serif !important;
     font-weight: 600 !important;
-    font-size: 0.9rem !important;
-    letter-spacing: 0.05em !important;
+    font-size: 0.88rem !important;
+    letter-spacing: 0.04em !important;
     padding: 0.65rem 1.8rem !important;
     cursor: pointer !important;
-    transition: all 0.2s ease !important;
-    box-shadow: 0 4px 20px rgba(212,175,55,0.3) !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 20px rgba(212,175,55,0.25), 0 1px 0 rgba(255,255,255,0.1) inset !important;
 }
 .stButton > button:hover {
-    transform: translateY(-1px) !important;
-    box-shadow: 0 8px 30px rgba(212,175,55,0.45) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 35px rgba(212,175,55,0.4) !important;
 }
 .stButton > button:active { transform: translateY(0) !important; }
 
-/* ── DANGER BUTTON ── */
-button[data-testid*="reject"], [class*="danger"] button {
-    background: linear-gradient(135deg, #c0392b, #e74c3c) !important;
-    box-shadow: 0 4px 20px rgba(192,57,43,0.3) !important;
-    color: white !important;
-}
-
-/* ── TABS ── */
 .stTabs [data-baseweb="tab-list"] {
     background: transparent !important;
-    border-bottom: 1px solid rgba(212,175,55,0.15) !important;
+    border-bottom: 1px solid rgba(212,175,55,0.12) !important;
     gap: 0 !important;
+    padding: 0 !important;
 }
 .stTabs [data-baseweb="tab"] {
     background: transparent !important;
-    color: rgba(232,220,200,0.45) !important;
-    font-family: 'DM Sans', sans-serif !important;
-    font-size: 0.9rem !important;
+    color: rgba(234,224,204,0.4) !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.88rem !important;
     font-weight: 500 !important;
     border: none !important;
     border-bottom: 2px solid transparent !important;
-    padding: 0.75rem 1.5rem !important;
+    padding: 0.85rem 1.6rem !important;
     transition: all 0.2s !important;
 }
 .stTabs [aria-selected="true"] {
@@ -128,179 +125,178 @@ button[data-testid*="reject"], [class*="danger"] button {
     background: transparent !important;
 }
 
-/* ── FILE UPLOADER ── */
 [data-testid="stFileUploader"] {
-    border: 1.5px dashed rgba(212,175,55,0.3) !important;
-    border-radius: 12px !important;
-    background: rgba(212,175,55,0.02) !important;
-    transition: border-color 0.2s !important;
+    border: 1.5px dashed rgba(212,175,55,0.25) !important;
+    border-radius: 14px !important;
+    background: rgba(212,175,55,0.015) !important;
+    transition: all 0.25s !important;
+    padding: 0.5rem !important;
 }
 [data-testid="stFileUploader"]:hover {
-    border-color: rgba(212,175,55,0.6) !important;
+    border-color: rgba(212,175,55,0.55) !important;
+    background: rgba(212,175,55,0.03) !important;
 }
 
-/* ── EXPANDER ── */
-.streamlit-expanderHeader {
-    background: rgba(212,175,55,0.05) !important;
-    border: 1px solid rgba(212,175,55,0.15) !important;
-    border-radius: 10px !important;
-    color: #E8DCC8 !important;
-    font-family: 'DM Sans', sans-serif !important;
-}
-.streamlit-expanderContent {
-    background: rgba(255,255,255,0.02) !important;
-    border: 1px solid rgba(212,175,55,0.1) !important;
-    border-top: none !important;
-    border-radius: 0 0 10px 10px !important;
-}
-
-/* ── ALERTS ── */
-.stSuccess { background: rgba(39,174,96,0.1) !important; border-left: 3px solid #27ae60 !important; color: #2ecc71 !important; border-radius: 8px !important; }
-.stError { background: rgba(192,57,43,0.1) !important; border-left: 3px solid #c0392b !important; color: #e74c3c !important; border-radius: 8px !important; }
-.stWarning { background: rgba(212,175,55,0.08) !important; border-left: 3px solid #D4AF37 !important; border-radius: 8px !important; }
-.stInfo { background: rgba(52,152,219,0.08) !important; border-left: 3px solid #3498db !important; border-radius: 8px !important; }
-
-/* ── METRIC ── */
-[data-testid="stMetric"] {
-    background: rgba(212,175,55,0.04) !important;
+[data-testid="stExpander"] {
     border: 1px solid rgba(212,175,55,0.12) !important;
     border-radius: 12px !important;
-    padding: 1.2rem 1.5rem !important;
+    background: rgba(255,255,255,0.015) !important;
+    overflow: hidden !important;
 }
-[data-testid="stMetricLabel"] { color: rgba(232,220,200,0.55) !important; font-size: 0.75rem !important; text-transform: uppercase !important; letter-spacing: 0.1em !important; }
-[data-testid="stMetricValue"] { color: #D4AF37 !important; font-family: 'Playfair Display', serif !important; font-size: 1.9rem !important; }
-[data-testid="stMetricDelta"] { font-size: 0.8rem !important; }
 
-/* ── DATAFRAME ── */
-.stDataFrame { border: 1px solid rgba(212,175,55,0.15) !important; border-radius: 10px !important; overflow: hidden !important; }
-
-/* ── DIVIDER ── */
-hr { border-color: rgba(212,175,55,0.12) !important; margin: 1.5rem 0 !important; }
-
-/* ── CUSTOM CARDS ── */
-.card {
-    background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(212,175,55,0.03) 100%);
-    border: 1px solid rgba(212,175,55,0.15);
-    border-radius: 16px;
-    padding: 1.8rem 2rem;
-    margin-bottom: 1rem;
-    position: relative;
-    overflow: hidden;
-    transition: border-color 0.3s, box-shadow 0.3s;
+.stSuccess > div {
+    background: rgba(39,174,96,0.08) !important;
+    border: 1px solid rgba(39,174,96,0.25) !important;
+    border-left: 3px solid #27ae60 !important;
+    color: #5dda8a !important;
+    border-radius: 10px !important;
 }
-.card:hover { border-color: rgba(212,175,55,0.35); box-shadow: 0 8px 40px rgba(212,175,55,0.08); }
-.card::before {
+.stError > div {
+    background: rgba(192,57,43,0.08) !important;
+    border: 1px solid rgba(192,57,43,0.25) !important;
+    border-left: 3px solid #c0392b !important;
+    color: #e87060 !important;
+    border-radius: 10px !important;
+}
+.stWarning > div {
+    background: rgba(212,175,55,0.07) !important;
+    border: 1px solid rgba(212,175,55,0.2) !important;
+    border-left: 3px solid #D4AF37 !important;
+    border-radius: 10px !important;
+}
+
+[data-testid="stMetric"] {
+    background: linear-gradient(135deg, rgba(212,175,55,0.05) 0%, rgba(255,255,255,0.02) 100%) !important;
+    border: 1px solid rgba(212,175,55,0.14) !important;
+    border-radius: 14px !important;
+    padding: 1.4rem 1.6rem !important;
+    position: relative !important;
+    overflow: hidden !important;
+    transition: border-color 0.3s, box-shadow 0.3s !important;
+}
+[data-testid="stMetric"]::before {
     content: '';
     position: absolute; top: 0; left: 0; right: 0; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(212,175,55,0.4), transparent);
+    background: linear-gradient(90deg, transparent, rgba(212,175,55,0.35), transparent);
+}
+[data-testid="stMetricLabel"] {
+    color: rgba(234,224,204,0.45) !important;
+    font-size: 0.72rem !important;
+    font-weight: 500 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.12em !important;
+}
+[data-testid="stMetricValue"] {
+    color: #D4AF37 !important;
+    font-family: 'Cormorant Garamond', serif !important;
+    font-size: 2.1rem !important;
+    font-weight: 600 !important;
+    line-height: 1.1 !important;
 }
 
-.badge {
-    display: inline-block;
-    padding: 0.2rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-.badge-pending { background: rgba(241,196,15,0.15); color: #f1c40f; border: 1px solid rgba(241,196,15,0.3); }
-.badge-approved { background: rgba(39,174,96,0.15); color: #27ae60; border: 1px solid rgba(39,174,96,0.3); }
-.badge-rejected { background: rgba(192,57,43,0.15); color: #e74c3c; border: 1px solid rgba(192,57,43,0.3); }
+hr { border: none !important; border-top: 1px solid rgba(212,175,55,0.1) !important; margin: 1.8rem 0 !important; }
 
-.logo-text {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.6rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, #D4AF37, #F5D060, #D4AF37);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    letter-spacing: 0.02em;
-}
-
+/* ── CUSTOM COMPONENTS ── */
+.page-wrap { padding: 2.5rem 3rem 4rem; max-width: 1100px; }
+.page-header { margin-bottom: 2.5rem; }
 .page-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 2rem;
-    font-weight: 700;
-    color: #E8DCC8;
-    margin-bottom: 0.25rem;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.4rem; font-weight: 600; color: #EAE0CC;
+    line-height: 1.1; letter-spacing: -0.01em;
 }
 .page-subtitle {
-    font-size: 0.88rem;
-    color: rgba(232,220,200,0.45);
-    margin-bottom: 2rem;
-    letter-spacing: 0.05em;
+    font-size: 0.85rem; color: rgba(234,224,204,0.38);
+    margin-top: 0.35rem; letter-spacing: 0.06em;
 }
-.section-title {
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: #D4AF37;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    margin-bottom: 1rem;
+.title-line {
+    width: 36px; height: 2px;
+    background: linear-gradient(90deg, #D4AF37, #F0D060);
+    border-radius: 2px; margin: 0.7rem 0 0;
 }
-.stat-row {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-    flex-wrap: wrap;
+.section-label {
+    font-size: 0.7rem; font-weight: 600; color: #D4AF37;
+    text-transform: uppercase; letter-spacing: 0.14em;
+    margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;
 }
-.stat-box {
-    flex: 1;
-    min-width: 120px;
-    background: rgba(212,175,55,0.04);
-    border: 1px solid rgba(212,175,55,0.12);
-    border-radius: 12px;
-    padding: 1.2rem;
-    text-align: center;
+.section-label::after {
+    content: ''; flex: 1; height: 1px;
+    background: rgba(212,175,55,0.12);
 }
-.stat-box .val { font-family: 'Playfair Display', serif; font-size: 1.7rem; color: #D4AF37; }
-.stat-box .lbl { font-size: 0.72rem; color: rgba(232,220,200,0.45); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.2rem; }
-
 .req-card {
-    background: rgba(255,255,255,0.02);
-    border: 1px solid rgba(212,175,55,0.12);
-    border-radius: 14px;
-    padding: 1.4rem 1.6rem;
-    margin-bottom: 1rem;
-    transition: border-color 0.2s;
+    background: linear-gradient(135deg, rgba(255,255,255,0.025) 0%, rgba(212,175,55,0.02) 100%);
+    border: 1px solid rgba(212,175,55,0.11);
+    border-radius: 16px; padding: 1.5rem 1.8rem;
+    margin-bottom: 0.85rem; position: relative;
+    overflow: hidden; transition: border-color 0.25s, box-shadow 0.25s, transform 0.2s;
 }
-.req-card:hover { border-color: rgba(212,175,55,0.3); }
-.req-card .branch { font-size: 0.78rem; color: rgba(232,220,200,0.45); text-transform: uppercase; letter-spacing: 0.08em; }
-.req-card .amount { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: #D4AF37; margin: 0.2rem 0; }
-.req-card .reason { font-size: 0.9rem; color: rgba(232,220,200,0.75); }
-.req-card .meta { font-size: 0.75rem; color: rgba(232,220,200,0.35); margin-top: 0.5rem; }
+.req-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212,175,55,0.25), transparent);
+}
+.req-card:hover {
+    border-color: rgba(212,175,55,0.28);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.25), 0 0 0 1px rgba(212,175,55,0.05);
+    transform: translateY(-1px);
+}
+.req-card .r-email { font-size: 0.72rem; color: rgba(234,224,204,0.38); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.3rem; }
+.req-card .r-amount { font-family: 'Cormorant Garamond', serif; font-size: 1.7rem; font-weight: 600; color: #D4AF37; line-height: 1.1; }
+.req-card .r-reason { font-size: 0.9rem; color: rgba(234,224,204,0.72); margin: 0.35rem 0 0.2rem; }
+.req-card .r-meta { font-size: 0.72rem; color: rgba(234,224,204,0.3); margin-top: 0.4rem; }
+.badge {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    padding: 0.22rem 0.8rem; border-radius: 20px;
+    font-size: 0.68rem; font-weight: 600;
+    letter-spacing: 0.09em; text-transform: uppercase;
+}
+.badge-pending  { background: rgba(241,196,15,0.12);  color: #f1c40f; border: 1px solid rgba(241,196,15,0.28); }
+.badge-approved { background: rgba(39,174,96,0.12);   color: #4cd884; border: 1px solid rgba(39,174,96,0.28); }
+.badge-rejected { background: rgba(192,57,43,0.12);   color: #e87060; border: 1px solid rgba(192,57,43,0.28); }
+.branch-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.025) 0%, rgba(212,175,55,0.02) 100%);
+    border: 1px solid rgba(212,175,55,0.11); border-radius: 16px;
+    padding: 1.6rem 1.8rem; margin-bottom: 0.85rem;
+    position: relative; overflow: hidden; transition: border-color 0.25s, box-shadow 0.25s;
+}
+.branch-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212,175,55,0.2), transparent);
+}
+.branch-card:hover { border-color: rgba(212,175,55,0.28); box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+.empty-state { text-align: center; padding: 3.5rem 2rem; color: rgba(234,224,204,0.3); }
+.empty-state .icon { font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.6; }
+.empty-state .msg { font-size: 0.92rem; }
 
-.login-container {
-    max-width: 420px;
-    margin: 5vh auto 0;
-    padding: 2.5rem;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(212,175,55,0.2);
-    border-radius: 20px;
-    box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(212,175,55,0.05) inset;
-    position: relative;
+/* Sidebar nav buttons */
+[data-testid="stSidebar"] .stButton > button {
+    background: transparent !important;
+    color: rgba(234,224,204,0.55) !important;
+    border: 1px solid rgba(212,175,55,0.08) !important;
+    border-radius: 9px !important;
+    font-size: 0.85rem !important;
+    font-weight: 400 !important;
+    box-shadow: none !important;
+    padding: 0.6rem 1rem !important;
+    text-align: left !important;
+    transition: all 0.2s !important;
 }
-.login-container::before {
-    content: '';
-    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-    width: 60%; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(212,175,55,0.6), transparent);
+[data-testid="stSidebar"] .stButton > button:hover {
+    background: rgba(212,175,55,0.07) !important;
+    color: #D4AF37 !important;
+    border-color: rgba(212,175,55,0.25) !important;
+    transform: none !important;
+    box-shadow: none !important;
 }
 
-.gold-line {
-    width: 40px; height: 2px;
-    background: linear-gradient(90deg, #D4AF37, #F5D060);
-    border-radius: 2px;
-    margin: 0.5rem 0 1.5rem;
-}
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(212,175,55,0.2); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(212,175,55,0.4); }
 </style>
 """, unsafe_allow_html=True)
 
 
 # ─────────────────────────────────────────────
-#  SUPABASE CLIENT (cached)
+#  SUPABASE CLIENT
 # ─────────────────────────────────────────────
 @st.cache_resource
 def get_supabase() -> Client:
@@ -308,10 +304,6 @@ def get_supabase() -> Client:
 
 supabase = get_supabase()
 
-
-# ─────────────────────────────────────────────
-#  SESSION DEFAULTS
-# ─────────────────────────────────────────────
 for k, v in {"user": None, "page": "login"}.items():
     if k not in st.session_state:
         st.session_state[k] = v
@@ -320,131 +312,145 @@ for k, v in {"user": None, "page": "login"}.items():
 # ─────────────────────────────────────────────
 #  HELPERS
 # ─────────────────────────────────────────────
-def format_iqd(amount: float) -> str:
-    return f"{amount:,.0f} IQD"
+def format_iqd(amount) -> str:
+    try:    return f"{float(amount):,.0f} IQD"
+    except: return "0 IQD"
 
 def format_date(iso: str) -> str:
     try:
         dt = datetime.fromisoformat(iso.replace("Z", "+00:00"))
         return dt.strftime("%d %b %Y · %H:%M")
-    except:
-        return iso or "—"
+    except: return iso or "—"
 
 def status_badge(status: str) -> str:
-    cls = {"pending": "badge-pending", "approved": "badge-approved", "rejected": "badge-rejected"}.get(status, "badge-pending")
-    icons = {"pending": "⏳", "approved": "✅", "rejected": "❌"}
-    label = {"pending": "Pending", "approved": "Approved", "rejected": "Rejected"}
-    return f'<span class="badge {cls}">{icons.get(status,"")} {label.get(status, status)}</span>'
+    cfg = {
+        "pending":  ("badge-pending",  "●", "Pending"),
+        "approved": ("badge-approved", "●", "Approved"),
+        "rejected": ("badge-rejected", "●", "Rejected"),
+    }
+    cls, icon, label = cfg.get(status, cfg["pending"])
+    return f'<span class="badge {cls}">{icon} {label}</span>'
 
-def upload_invoice_image(file_bytes: bytes, filename: str) -> str | None:
-    """Upload image to Supabase Storage and return public URL."""
+def upload_invoice_image(file_bytes: bytes, filename: str):
     try:
         ext = filename.rsplit(".", 1)[-1].lower()
-        unique_name = f"invoices/{uuid.uuid4()}.{ext}"
-        res = supabase.storage.from_("invoices").upload(
-            path=unique_name,
-            file=file_bytes,
-            file_options={"content-type": f"image/{ext}"}
-        )
-        # Get public URL
-        public_url = supabase.storage.from_("invoices").get_public_url(unique_name)
-        return public_url
+        ct  = "application/pdf" if ext == "pdf" else f"image/{ext}"
+        path = f"invoices/{uuid.uuid4()}.{ext}"
+        supabase.storage.from_("invoices").upload(path=path, file=file_bytes, file_options={"content-type": ct})
+        return supabase.storage.from_("invoices").get_public_url(path)
     except Exception as e:
         st.error(f"Image upload failed: {e}")
         return None
+
+def fetch_all_requests():
+    try:    return supabase.table("petty_cash_requests").select("*").order("created_at", desc=True).execute().data or []
+    except: return []
 
 
 # ─────────────────────────────────────────────
 #  LOGIN PAGE
 # ─────────────────────────────────────────────
 def page_login():
-    # Centered golden logo header
     st.markdown("""
-    <div style="text-align:center; padding: 3rem 0 1rem;">
-        <div style="font-size: 2.8rem; margin-bottom: 0.5rem;">💎</div>
-        <div style="font-family:'Playfair Display',serif; font-size:2.2rem; font-weight:700;
-             background:linear-gradient(135deg,#D4AF37,#F5D060,#C9A227);
-             -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-             background-clip:text; letter-spacing:0.05em;">
-            JAWHAR ERP
-        </div>
-        <div style="color:rgba(232,220,200,0.4); font-size:0.8rem; letter-spacing:0.2em;
-             text-transform:uppercase; margin-top:0.3rem;">
-            Petty Cash Management System
-        </div>
+    <div style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:2rem;">
     </div>
     """, unsafe_allow_html=True)
 
-    col_l, col_m, col_r = st.columns([1, 1.2, 1])
-    with col_m:
-        st.markdown('<div class="login-container">', unsafe_allow_html=True)
+    _, col, _ = st.columns([1, 1.1, 1])
+    with col:
         st.markdown("""
-        <p class="section-title" style="text-align:center; margin-bottom:1.5rem;">
-            Authorized Access Only
-        </p>
+        <div style="text-align:center; margin-bottom:2rem;">
+            <div style="font-size:2.8rem; margin-bottom:0.5rem; filter:drop-shadow(0 0 20px rgba(212,175,55,0.3));">💎</div>
+            <div style="font-family:'Cormorant Garamond',serif; font-size:2.6rem; font-weight:700;
+                 background:linear-gradient(135deg,#B8942A,#F0D060,#C9A227);
+                 -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+                 background-clip:text; letter-spacing:0.08em; line-height:1;">JAWHAR</div>
+            <div style="font-size:0.68rem; color:rgba(234,224,204,0.28); letter-spacing:0.22em;
+                 text-transform:uppercase; margin-top:0.4rem;">Petty Cash Management</div>
+        </div>
+        <div style="background:linear-gradient(160deg,rgba(255,255,255,0.035) 0%,rgba(212,175,55,0.02) 100%);
+             border:1px solid rgba(212,175,55,0.18); border-radius:22px; padding:2.5rem 2.2rem;
+             box-shadow:0 40px 100px rgba(0,0,0,0.55); position:relative; overflow:hidden;">
+            <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);
+                 width:55%;height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,0.7),transparent);"></div>
+            <div style="position:absolute;bottom:-60px;right:-60px;width:180px;height:180px;
+                 background:radial-gradient(circle,rgba(212,175,55,0.05) 0%,transparent 70%);pointer-events:none;"></div>
+        </div>
         """, unsafe_allow_html=True)
 
-        email = st.text_input("Email Address", placeholder="you@jawhar.com", key="login_email")
+        email    = st.text_input("Email Address", placeholder="you@jawhar.com", key="login_email")
         password = st.text_input("Password", type="password", placeholder="••••••••", key="login_pass")
         st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
 
-        if st.button("Sign In →", use_container_width=True):
+        if st.button("Sign In  →", use_container_width=True):
             if not email or not password:
-                st.warning("Please enter both email and password.")
+                st.warning("Please enter your email and password.")
             else:
-                with st.spinner("Authenticating…"):
+                with st.spinner("Verifying credentials…"):
                     try:
                         res = supabase.auth.sign_in_with_password({"email": email, "password": password})
                         st.session_state.user = res.user
-                        st.success("Access granted. Loading dashboard…")
                         st.rerun()
-                    except Exception as e:
-                        st.error("Authentication failed. Please check your credentials.")
+                    except:
+                        st.error("Access denied. Please check your credentials.")
 
         st.markdown("""
-        <p style="text-align:center; color:rgba(232,220,200,0.25); font-size:0.75rem; margin-top:1.5rem;">
-            Protected system — unauthorized access is prohibited
+        <p style="text-align:center;color:rgba(234,224,204,0.2);font-size:0.7rem;
+           margin-top:1.5rem;letter-spacing:0.05em;">
+            Restricted system · Authorized personnel only
         </p>
         """, unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
 
 
 # ─────────────────────────────────────────────
-#  SIDEBAR (authenticated)
+#  SIDEBAR
 # ─────────────────────────────────────────────
 def render_sidebar(user_email: str, is_admin: bool):
     with st.sidebar:
         st.markdown(f"""
-        <div style="padding: 1.5rem 0.5rem 1rem;">
-            <div class="logo-text">💎 JAWHAR</div>
-            <div style="font-size:0.72rem; color:rgba(232,220,200,0.35); letter-spacing:0.15em; text-transform:uppercase; margin-top:0.15rem;">
-                {"Management Portal" if is_admin else "Branch Portal"}
+        <div style="padding:1.8rem 1.4rem 1rem;">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:700;
+                 background:linear-gradient(135deg,#C9A227,#F0D060,#C9A227);
+                 -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+                 background-clip:text;letter-spacing:0.06em;">💎 JAWHAR ERP</div>
+            <div style="font-size:0.65rem;color:rgba(234,224,204,0.28);letter-spacing:0.18em;
+                 text-transform:uppercase;margin-top:0.2rem;">
+                {"Management" if is_admin else "Branch Portal"}
             </div>
         </div>
-        <hr style="margin:0 0 1rem;">
-        <div style="font-size:0.72rem; color:rgba(232,220,200,0.4); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:0.5rem;">
-            Signed in as
-        </div>
-        <div style="font-size:0.88rem; color:#D4AF37; font-weight:500; word-break:break-all; margin-bottom:1.5rem;">
-            {user_email}
-        </div>
+        <div style="margin:0 1rem;height:1px;
+             background:linear-gradient(90deg,transparent,rgba(212,175,55,0.2),transparent);"></div>
+        <div style="padding:1rem 1.4rem 0.5rem;">
+            <div style="font-size:0.65rem;color:rgba(234,224,204,0.3);text-transform:uppercase;
+                 letter-spacing:0.12em;margin-bottom:0.4rem;">Account</div>
+            <div style="font-size:0.82rem;color:#D4AF37;font-weight:500;word-break:break-all;margin-bottom:1.4rem;">
+                {user_email}
+            </div>
         """, unsafe_allow_html=True)
 
         if is_admin:
-            st.markdown('<p class="section-title">Navigation</p>', unsafe_allow_html=True)
-            if st.button("📊  Dashboard", use_container_width=True):
-                st.session_state.page = "admin_dashboard"
-                st.rerun()
-            if st.button("📋  All Requests", use_container_width=True):
-                st.session_state.page = "admin_all"
-                st.rerun()
-            if st.button("🏪  Branches", use_container_width=True):
-                st.session_state.page = "admin_branches"
-                st.rerun()
+            st.markdown("""
+            <div style="font-size:0.65rem;color:rgba(234,224,204,0.3);text-transform:uppercase;
+                 letter-spacing:0.12em;margin-bottom:0.6rem;">Navigation</div>
+            """, unsafe_allow_html=True)
+            for key, label in [
+                ("admin_dashboard", "📊  Dashboard"),
+                ("admin_all",       "📋  All Requests"),
+                ("admin_branches",  "🏪  Branches"),
+            ]:
+                if st.button(label, use_container_width=True, key=f"nav_{key}"):
+                    st.session_state.page = key
+                    st.rerun()
 
-        st.markdown("<div style='flex:1'></div>", unsafe_allow_html=True)
-        st.markdown("<hr>", unsafe_allow_html=True)
-        if st.button("⎋  Sign Out", use_container_width=True):
+        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("<div style='height:2rem'></div>", unsafe_allow_html=True)
+        st.markdown("""
+        <div style="margin:0 1rem;height:1px;
+             background:linear-gradient(90deg,transparent,rgba(212,175,55,0.12),transparent);
+             margin-bottom:0.8rem;"></div>
+        """, unsafe_allow_html=True)
+
+        if st.button("⎋  Sign Out", use_container_width=True, key="signout"):
             supabase.auth.sign_out()
             st.session_state.user = None
             st.session_state.page = "login"
@@ -455,256 +461,241 @@ def render_sidebar(user_email: str, is_admin: bool):
 #  ADMIN — DASHBOARD
 # ─────────────────────────────────────────────
 def page_admin_dashboard():
-    st.markdown('<div class="page-title">Command Center</div>', unsafe_allow_html=True)
-    st.markdown('<div class="page-subtitle">Real-time overview of all petty cash activity</div>', unsafe_allow_html=True)
+    st.markdown('<div class="page-wrap">', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="page-header">
+        <div class="page-title">Command Center</div>
+        <div class="page-subtitle">Real-time overview of all petty cash activity</div>
+        <div class="title-line"></div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    try:
-        all_reqs = supabase.table("petty_cash_requests").select("*, branches(branch_name)").execute().data or []
-    except:
-        all_reqs = []
-
+    all_reqs = fetch_all_requests()
     pending  = [r for r in all_reqs if r.get("status") == "pending"]
     approved = [r for r in all_reqs if r.get("status") == "approved"]
     rejected = [r for r in all_reqs if r.get("status") == "rejected"]
-    total_approved_amt = sum(r.get("amount", 0) for r in approved)
+    total_amt = sum(float(r.get("amount", 0)) for r in approved)
 
-    # ── Stats ──
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("⏳ Pending", len(pending))
-    c2.metric("✅ Approved", len(approved))
-    c3.metric("❌ Rejected", len(rejected))
-    c4.metric("💰 Total Disbursed", format_iqd(total_approved_amt))
+    c1.metric("⏳  Pending",         len(pending))
+    c2.metric("✅  Approved",        len(approved))
+    c3.metric("❌  Rejected",        len(rejected))
+    c4.metric("💰  Total Disbursed", format_iqd(total_amt))
 
     st.markdown("<hr>", unsafe_allow_html=True)
-
-    # ── Pending Requests ──
-    st.markdown('<p class="section-title">Pending Approvals</p>', unsafe_allow_html=True)
+    st.markdown('<div class="section-label">Pending Approvals</div>', unsafe_allow_html=True)
 
     if not pending:
-        st.info("✨ No pending requests — you're all caught up.")
+        st.markdown("""
+        <div class="empty-state">
+            <div class="icon">✨</div>
+            <div class="msg">All caught up — no pending requests.</div>
+        </div>""", unsafe_allow_html=True)
     else:
         for r in pending:
-            branch_name = r.get("branches", {}).get("branch_name", "Unknown Branch") if r.get("branches") else r.get("branch_id", "Branch")
-            created = format_date(r.get("created_at", ""))
-            amt = r.get("amount", 0)
-            reason = r.get("reason", "—")
-
+            uid = r.get("user_id", "Unknown")
+            short_uid = uid[:14] + "…" if len(uid) > 14 else uid
             st.markdown(f"""
             <div class="req-card">
-                <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.5rem;">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;">
                     <div>
-                        <div class="branch">🏪 {branch_name}</div>
-                        <div class="amount">{format_iqd(amt)}</div>
-                        <div class="reason">{reason}</div>
-                        <div class="meta">Submitted {created}</div>
+                        <div class="r-email">User: {short_uid}</div>
+                        <div class="r-amount">{format_iqd(r.get('amount',0))}</div>
+                        <div class="r-reason">{r.get('reason','—')}</div>
+                        <div class="r-meta">{format_date(r.get('created_at',''))}</div>
                     </div>
                     <div>{status_badge("pending")}</div>
                 </div>
-            </div>
-            """, unsafe_allow_html=True)
+            </div>""", unsafe_allow_html=True)
 
             if r.get("invoice_image_url"):
-                with st.expander("🖼 View Invoice Image"):
+                with st.expander("🖼  View Invoice"):
                     st.image(r["invoice_image_url"], use_column_width=True)
 
-            col_a, col_r, col_s = st.columns([1, 1, 2])
-            with col_a:
-                if st.button("✅ Approve", key=f"approve_{r['id']}"):
+            ca, cr, _ = st.columns([1, 1, 2.5])
+            with ca:
+                if st.button("✅  Approve", key=f"ap_{r['id']}"):
                     supabase.table("petty_cash_requests").update({"status": "approved"}).eq("id", r["id"]).execute()
-                    st.success("Request approved!")
                     st.rerun()
-            with col_r:
-                if st.button("❌ Reject", key=f"reject_{r['id']}"):
+            with cr:
+                if st.button("❌  Reject", key=f"rj_{r['id']}"):
                     supabase.table("petty_cash_requests").update({"status": "rejected"}).eq("id", r["id"]).execute()
-                    st.warning("Request rejected.")
                     st.rerun()
-            st.markdown("<hr style='margin:0.75rem 0'>", unsafe_allow_html=True)
+            st.markdown("<div style='height:0.4rem'></div>", unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
 # ─────────────────────────────────────────────
 #  ADMIN — ALL REQUESTS
 # ─────────────────────────────────────────────
 def page_admin_all():
-    st.markdown('<div class="page-title">All Requests</div>', unsafe_allow_html=True)
-    st.markdown('<div class="page-subtitle">Complete history of petty cash submissions</div>', unsafe_allow_html=True)
+    st.markdown('<div class="page-wrap">', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="page-header">
+        <div class="page-title">All Requests</div>
+        <div class="page-subtitle">Complete history of petty cash submissions</div>
+        <div class="title-line"></div>
+    </div>""", unsafe_allow_html=True)
 
-    try:
-        all_reqs = supabase.table("petty_cash_requests").select("*, branches(branch_name)").order("created_at", desc=True).execute().data or []
-    except:
-        all_reqs = []
-        st.warning("Could not load requests. Check database configuration.")
+    all_reqs = fetch_all_requests()
+    cf1, cf2 = st.columns(2)
+    with cf1: fstatus = st.selectbox("Status", ["All", "Pending", "Approved", "Rejected"])
+    with cf2: search  = st.text_input("Search reason…", placeholder="e.g. electricity")
 
-    # Filters
-    col_f1, col_f2 = st.columns(2)
-    with col_f1:
-        filter_status = st.selectbox("Filter by Status", ["All", "Pending", "Approved", "Rejected"])
-    with col_f2:
-        search = st.text_input("Search by reason or branch…", placeholder="e.g. electricity")
-
-    if filter_status != "All":
-        all_reqs = [r for r in all_reqs if r.get("status") == filter_status.lower()]
+    if fstatus != "All":
+        all_reqs = [r for r in all_reqs if r.get("status") == fstatus.lower()]
     if search:
         s = search.lower()
-        all_reqs = [r for r in all_reqs if s in (r.get("reason","") or "").lower()
-                    or s in (r.get("branches",{}) or {}).get("branch_name","").lower()]
+        all_reqs = [r for r in all_reqs if s in (r.get("reason","") or "").lower()]
+
+    st.markdown(f'<div class="section-label">{len(all_reqs)} Result{"s" if len(all_reqs)!=1 else ""}</div>', unsafe_allow_html=True)
 
     if not all_reqs:
-        st.info("No requests match your filters.")
-        return
-
-    for r in all_reqs:
-        branch_name = (r.get("branches") or {}).get("branch_name", r.get("branch_id", "Unknown"))
-        status = r.get("status", "pending")
-        st.markdown(f"""
-        <div class="req-card">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
-                <div>
-                    <div class="branch">🏪 {branch_name}</div>
-                    <div class="amount">{format_iqd(r.get('amount',0))}</div>
-                    <div class="reason">{r.get('reason','—')}</div>
-                    <div class="meta">{format_date(r.get('created_at',''))}</div>
+        st.markdown('<div class="empty-state"><div class="icon">🔍</div><div class="msg">No requests match your filters.</div></div>', unsafe_allow_html=True)
+    else:
+        for r in all_reqs:
+            status = r.get("status", "pending")
+            uid = r.get("user_id", "Unknown")
+            short_uid = uid[:14] + "…" if len(uid) > 14 else uid
+            st.markdown(f"""
+            <div class="req-card">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;">
+                    <div>
+                        <div class="r-email">{short_uid}</div>
+                        <div class="r-amount">{format_iqd(r.get('amount',0))}</div>
+                        <div class="r-reason">{r.get('reason','—')}</div>
+                        <div class="r-meta">{format_date(r.get('created_at',''))}</div>
+                    </div>
+                    {status_badge(status)}
                 </div>
-                {status_badge(status)}
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+            </div>""", unsafe_allow_html=True)
+            if r.get("invoice_image_url"):
+                with st.expander("🖼  Invoice"):
+                    st.image(r["invoice_image_url"], use_column_width=True)
+            if status == "pending":
+                ca, cr, _ = st.columns([1, 1, 3])
+                if ca.button("✅ Approve", key=f"a2_{r['id']}"):
+                    supabase.table("petty_cash_requests").update({"status": "approved"}).eq("id", r["id"]).execute()
+                    st.rerun()
+                if cr.button("❌ Reject", key=f"r2_{r['id']}"):
+                    supabase.table("petty_cash_requests").update({"status": "rejected"}).eq("id", r["id"]).execute()
+                    st.rerun()
+            st.markdown("<div style='height:0.3rem'></div>", unsafe_allow_html=True)
 
-        if r.get("invoice_image_url"):
-            with st.expander("🖼 Invoice"):
-                st.image(r["invoice_image_url"], use_column_width=True)
-
-        if status == "pending":
-            ca, cr, _ = st.columns([1,1,3])
-            if ca.button("✅ Approve", key=f"a2_{r['id']}"):
-                supabase.table("petty_cash_requests").update({"status": "approved"}).eq("id", r["id"]).execute()
-                st.rerun()
-            if cr.button("❌ Reject", key=f"r2_{r['id']}"):
-                supabase.table("petty_cash_requests").update({"status": "rejected"}).eq("id", r["id"]).execute()
-                st.rerun()
-        st.markdown("<hr style='margin:0.5rem 0'>", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
 # ─────────────────────────────────────────────
 #  ADMIN — BRANCHES
 # ─────────────────────────────────────────────
 def page_admin_branches():
-    st.markdown('<div class="page-title">Branch Overview</div>', unsafe_allow_html=True)
-    st.markdown('<div class="page-subtitle">Spending summary per branch</div>', unsafe_allow_html=True)
+    st.markdown('<div class="page-wrap">', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="page-header">
+        <div class="page-title">Branch Overview</div>
+        <div class="page-subtitle">Spending summary grouped by user</div>
+        <div class="title-line"></div>
+    </div>""", unsafe_allow_html=True)
 
-    try:
-        reqs = supabase.table("petty_cash_requests").select("*, branches(branch_name)").execute().data or []
-    except:
-        reqs = []
-        st.warning("Could not load data.")
-
+    all_reqs = fetch_all_requests()
     from collections import defaultdict
-    branch_stats: dict = defaultdict(lambda: {"total": 0, "pending": 0, "approved": 0, "rejected": 0, "count": 0})
+    stats: dict = defaultdict(lambda: {"total": 0.0, "pending": 0, "approved": 0, "rejected": 0, "count": 0})
 
-    for r in reqs:
-        bn = (r.get("branches") or {}).get("branch_name", r.get("branch_id", "Unknown"))
-        status = r.get("status", "pending")
-        amt = r.get("amount", 0)
-        branch_stats[bn]["count"] += 1
-        branch_stats[bn]["total"] += amt
-        branch_stats[bn][status] = branch_stats[bn].get(status, 0) + 1
+    for r in all_reqs:
+        key = r.get("user_id", "Unknown")
+        s   = r.get("status", "pending")
+        stats[key]["count"] += 1
+        stats[key]["total"] += float(r.get("amount", 0))
+        stats[key][s] = stats[key].get(s, 0) + 1
 
-    if not branch_stats:
-        st.info("No branch data available yet.")
-        return
-
-    for branch, stats in sorted(branch_stats.items()):
-        st.markdown(f"""
-        <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
-                <div>
-                    <div style="font-size:0.78rem; color:rgba(232,220,200,0.4); text-transform:uppercase; letter-spacing:0.1em;">Branch</div>
-                    <div style="font-family:'Playfair Display',serif; font-size:1.4rem; color:#E8DCC8; margin:0.1rem 0;">{branch}</div>
-                    <div style="font-size:0.85rem; color:rgba(232,220,200,0.5);">{stats['count']} requests · {format_iqd(stats['total'])} total</div>
+    if not stats:
+        st.markdown('<div class="empty-state"><div class="icon">🏪</div><div class="msg">No data yet.</div></div>', unsafe_allow_html=True)
+    else:
+        st.markdown(f'<div class="section-label">{len(stats)} User{"s" if len(stats)!=1 else ""}</div>', unsafe_allow_html=True)
+        for uid, s in sorted(stats.items(), key=lambda x: -x[1]["total"]):
+            short = uid[:16] + "…" if len(uid) > 16 else uid
+            st.markdown(f"""
+            <div class="branch-card">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+                    <div>
+                        <div style="font-size:0.68rem;color:rgba(234,224,204,0.35);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.3rem;">User ID</div>
+                        <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:#EAE0CC;font-weight:600;">{short}</div>
+                        <div style="font-size:0.82rem;color:rgba(234,224,204,0.45);margin-top:0.25rem;">
+                            {s['count']} request{"s" if s['count']!=1 else ""} · {format_iqd(s['total'])} total
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;">
+                        <div style="text-align:center;">
+                            <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:#f1c40f;">{s['pending']}</div>
+                            <div style="font-size:0.62rem;color:rgba(234,224,204,0.3);text-transform:uppercase;letter-spacing:0.08em;">Pending</div>
+                        </div>
+                        <div style="text-align:center;">
+                            <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:#4cd884;">{s['approved']}</div>
+                            <div style="font-size:0.62rem;color:rgba(234,224,204,0.3);text-transform:uppercase;letter-spacing:0.08em;">Approved</div>
+                        </div>
+                        <div style="text-align:center;">
+                            <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:#e87060;">{s['rejected']}</div>
+                            <div style="font-size:0.62rem;color:rgba(234,224,204,0.3);text-transform:uppercase;letter-spacing:0.08em;">Rejected</div>
+                        </div>
+                    </div>
                 </div>
-                <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
-                    {status_badge("pending")} <span style="font-size:0.9rem">{stats['pending']}</span> &nbsp;
-                    {status_badge("approved")} <span style="font-size:0.9rem">{stats['approved']}</span> &nbsp;
-                    {status_badge("rejected")} <span style="font-size:0.9rem">{stats['rejected']}</span>
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+            </div>""", unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
 # ─────────────────────────────────────────────
-#  BRANCH — PORTAL
+#  BRANCH PORTAL
 # ─────────────────────────────────────────────
 def page_branch_portal(user):
     user_email = user.email
-    user_id = user.id
+    user_id    = user.id
 
-    st.markdown('<div class="page-title">Branch Portal</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="page-subtitle">Logged in as {user_email}</div>', unsafe_allow_html=True)
-
-    # Try to get branch info from user metadata or a lookup table
-    try:
-        branch_data = supabase.table("branches").select("*").eq("user_id", user_id).execute().data
-        branch_name = branch_data[0]["branch_name"] if branch_data else user_email.split("@")[0].title()
-        branch_id = branch_data[0]["id"] if branch_data else None
-    except:
-        branch_name = user_email.split("@")[0].title()
-        branch_id = None
+    st.markdown('<div class="page-wrap">', unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="page-header">
+        <div class="page-title">Branch Portal</div>
+        <div class="page-subtitle">{user_email}</div>
+        <div class="title-line"></div>
+    </div>""", unsafe_allow_html=True)
 
     tab1, tab2 = st.tabs(["📤  Submit Invoice", "📜  My Requests"])
 
-    # ── TAB 1: SUBMIT ──
     with tab1:
-        st.markdown('<p class="section-title">New Petty Cash Request</p>', unsafe_allow_html=True)
-
+        st.markdown('<div class="section-label">New Petty Cash Request</div>', unsafe_allow_html=True)
         with st.form("submit_form", clear_on_submit=True):
-            amt = st.number_input("Amount (IQD)", min_value=0, step=500, format="%d",
-                                   help="Enter the exact amount spent")
-            reason = st.text_area("Description / Reason",
-                                   placeholder="e.g. Monthly electricity bill for Al-Mansour branch",
-                                   height=100)
-            invoice_file = st.file_uploader(
-                "Upload Receipt or Invoice",
-                type=["png", "jpg", "jpeg", "pdf"],
-                help="Supported: PNG, JPG, PDF"
-            )
-
-            submitted = st.form_submit_button("Submit Request →", use_container_width=True)
+            amt          = st.number_input("Amount (IQD)", min_value=0, step=500, format="%d")
+            reason       = st.text_area("Description / Reason", placeholder="e.g. Monthly electricity bill", height=100)
+            invoice_file = st.file_uploader("Upload Receipt or Invoice", type=["png","jpg","jpeg","pdf"])
+            submitted    = st.form_submit_button("Submit Request  →", use_container_width=True)
 
             if submitted:
                 errors = []
-                if amt <= 0:         errors.append("Amount must be greater than 0.")
+                if amt <= 0:           errors.append("Amount must be greater than 0.")
                 if not reason.strip(): errors.append("Please provide a description.")
-                if not invoice_file:  errors.append("Please upload an invoice image.")
+                if not invoice_file:   errors.append("Please upload an invoice or receipt.")
+                for e in errors: st.error(e)
 
-                if errors:
-                    for e in errors:
-                        st.error(e)
-                else:
+                if not errors:
                     image_url = None
                     with st.spinner("Uploading invoice…"):
-                        if invoice_file:
-                            file_bytes = invoice_file.read()
-                            image_url = upload_invoice_image(file_bytes, invoice_file.name)
-
+                        image_url = upload_invoice_image(invoice_file.read(), invoice_file.name)
                     with st.spinner("Submitting request…"):
-                        payload = {
-                            "user_id": user_id,
-                            "branch_id": branch_id,
-                            "amount": amt,
-                            "reason": reason.strip(),
-                            "status": "pending",
-                            "invoice_image_url": image_url,
-                        }
                         try:
-                            supabase.table("petty_cash_requests").insert(payload).execute()
+                            supabase.table("petty_cash_requests").insert({
+                                "user_id":           user_id,
+                                "amount":            amt,
+                                "reason":            reason.strip(),
+                                "status":            "pending",
+                                "invoice_image_url": image_url,
+                            }).execute()
                             st.success("✅ Request submitted successfully! Management will review it shortly.")
                         except Exception as e:
                             st.error(f"Submission failed: {e}")
 
-    # ── TAB 2: HISTORY ──
     with tab2:
-        st.markdown('<p class="section-title">Your Request History</p>', unsafe_allow_html=True)
-
+        st.markdown('<div class="section-label">Your Request History</div>', unsafe_allow_html=True)
         try:
             my_reqs = supabase.table("petty_cash_requests").select("*").eq("user_id", user_id).order("created_at", desc=True).execute().data or []
         except:
@@ -712,35 +703,32 @@ def page_branch_portal(user):
             st.warning("Could not load history.")
 
         if not my_reqs:
-            st.info("You haven't submitted any requests yet.")
+            st.markdown('<div class="empty-state"><div class="icon">📋</div><div class="msg">No requests submitted yet.</div></div>', unsafe_allow_html=True)
         else:
-            # Mini stats
-            total_submitted = sum(r.get("amount", 0) for r in my_reqs)
-            total_approved  = sum(r.get("amount", 0) for r in my_reqs if r.get("status") == "approved")
+            total_approved = sum(float(r.get("amount", 0)) for r in my_reqs if r.get("status") == "approved")
             c1, c2, c3 = st.columns(3)
-            c1.metric("Total Submitted", len(my_reqs))
+            c1.metric("Total Requests",  len(my_reqs))
             c2.metric("Approved Amount", format_iqd(total_approved))
-            c3.metric("Pending", sum(1 for r in my_reqs if r.get("status") == "pending"))
-
+            c3.metric("Pending",         sum(1 for r in my_reqs if r.get("status") == "pending"))
             st.markdown("<hr>", unsafe_allow_html=True)
-
             for r in my_reqs:
                 status = r.get("status", "pending")
                 st.markdown(f"""
                 <div class="req-card">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.5rem;">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;">
                         <div>
-                            <div class="amount">{format_iqd(r.get('amount',0))}</div>
-                            <div class="reason">{r.get('reason','—')}</div>
-                            <div class="meta">{format_date(r.get('created_at',''))}</div>
+                            <div class="r-amount">{format_iqd(r.get('amount',0))}</div>
+                            <div class="r-reason">{r.get('reason','—')}</div>
+                            <div class="r-meta">{format_date(r.get('created_at',''))}</div>
                         </div>
                         {status_badge(status)}
                     </div>
-                </div>
-                """, unsafe_allow_html=True)
+                </div>""", unsafe_allow_html=True)
                 if r.get("invoice_image_url"):
-                    with st.expander("🖼 Invoice"):
+                    with st.expander("🖼  Invoice"):
                         st.image(r["invoice_image_url"], use_column_width=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
 # ─────────────────────────────────────────────
@@ -757,16 +745,10 @@ else:
     if is_admin:
         if st.session_state.page not in ("admin_dashboard", "admin_all", "admin_branches"):
             st.session_state.page = "admin_dashboard"
-        pages = {
+        {
             "admin_dashboard": page_admin_dashboard,
             "admin_all":       page_admin_all,
             "admin_branches":  page_admin_branches,
-        }
-        # Main content padding
-        st.markdown("<div style='padding: 2rem 3rem;'>", unsafe_allow_html=True)
-        pages[st.session_state.page]()
-        st.markdown("</div>", unsafe_allow_html=True)
+        }[st.session_state.page]()
     else:
-        st.markdown("<div style='padding: 2rem 3rem;'>", unsafe_allow_html=True)
         page_branch_portal(user)
-        st.markdown("</div>", unsafe_allow_html=True)
